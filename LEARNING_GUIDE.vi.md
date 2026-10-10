@@ -64,7 +64,7 @@ Ví dụ: một ảnh có năm caption, top-5 gồm một caption đúng và b�
 
 ## 5. Kết quả thực nghiệm và điều chúng ta được phép kết luận
 
-| Dataset | Paper PR-CLIP mR | OpenAI CLIP baseline trên test thật | Hai bước PR-CLIP |
+| Tập dữ liệu | mR PR-CLIP trong bài báo | Baseline OpenAI CLIP trên tập test thật | PR-CLIP sau hai bước |
 | --- | ---: | ---: | ---: |
 | RSITMD | 52,41% | 24,23% | 24,23% |
 | RSICD | 39,23% | 15,69% | chưa đo |

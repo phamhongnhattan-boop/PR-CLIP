@@ -1,16 +1,16 @@
-# PR-CLIP: A New Multimodal Remote Sensing Retrieval Model Based on Cross-Modal Positional Information Reconstruction
+# PR-CLIP: Mô hình truy hồi viễn thám đa phương thức dựa trên tái dựng thông tin vị trí xuyên phương thức
 
-## Independent reproduction work
+## Phần tái lập độc lập
 
-This branch preserves the authors' repository history and adds an independent implementation, dataset audit, real-dataset measurements, and learning material. Start with [the reproducibility report](REPRODUCTION.md), [the Vietnamese learning guide](LEARNING_GUIDE.vi.md), and [the contribution record](CONTRIBUTIONS.md). The paper's published PR-CLIP scores have **not** been reproduced; the official checkpoint link currently points to an image archive. See the report for exact results, setup commands, and the observed paper/code differences.
+Nhánh này giữ nguyên lịch sử kho mã của tác giả và bổ sung một bản triển khai độc lập, kiểm toán dữ liệu, kết quả đo trên dữ liệu thật cùng tài liệu học sâu. Hãy bắt đầu với [báo cáo tái lập](REPRODUCTION.md), [hướng dẫn học sâu bằng tiếng Việt](LEARNING_GUIDE.vi.md) và [thông tin đóng góp](CONTRIBUTIONS.md). Điểm số PR-CLIP được công bố trong bài báo **chưa được tái lập**; liên kết checkpoint chính thức hiện trỏ tới một kho ảnh. Báo cáo trình bày kết quả chính xác, lệnh thiết lập và các khác biệt đã phát hiện giữa bài báo với mã nguồn.
 
-This is the repository of PR-CLIP: A New Multimodal Remote Sensing Retrieval Model Based on Cross-Modal Positional Information Reconstruction.
+Đây là kho mã của PR-CLIP: mô hình truy hồi viễn thám đa phương thức dựa trên tái dựng thông tin vị trí xuyên phương thức.
 
-PR-CLIP is trained with the [`ITRA`](https://itra.readthedocs.io/) codebase
+PR-CLIP được huấn luyện bằng nền tảng mã nguồn [`ITRA`](https://itra.readthedocs.io/).
 
 ![framework](framework.png)
 
-### Requirements:
+### Yêu cầu môi trường
 
 ```
 torch==2.5.1
@@ -25,27 +25,27 @@ pandas==2.2.3
 pillow==11.0.0
 ```
 
-### Download:
+### Tải dữ liệu
 
-- Download images from https://drive.google.com/file/d/15htMe2iE4kVujjWURxfCxZXk8vAAetoT/view?usp=drive_link and put them into ```./images/```
+- Tải ảnh từ https://drive.google.com/file/d/15htMe2iE4kVujjWURxfCxZXk8vAAetoT/view?usp=drive_link và đặt trong thư mục `./images/`.
 
-- Download checkpoints from https://drive.google.com/file/d/15htMe2iE4kVujjWURxfCxZXk8vAAetoT/view?usp=drive_link and put them into ```./cache/weights/```
+- Theo README gốc, tải checkpoint từ cùng liên kết trên và đặt trong `./cache/weights/`. Tuy nhiên, liên kết này hiện trả về kho ảnh chứ không phải checkpoint; xem báo cáo tái lập để biết chi tiết.
 
 ### RSITR:
 
-train and test on RSICD
+Huấn luyện và kiểm thử trên RSICD:
 
 ```
 sh train_rsicd.sh [gpu number] [port] [log_name]
 ```
 
-train and test on RSITMD
+Huấn luyện và kiểm thử trên RSITMD:
 
 ```
 sh train_rsitmd.sh [gpu number] [port] [log_name] 
 ```
 
-test only
+Chỉ kiểm thử:
 
 ```
 python retrieval.py

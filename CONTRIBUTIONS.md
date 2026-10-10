@@ -1,11 +1,11 @@
-# Contributions and provenance
+# Đóng góp và nguồn gốc
 
-This repository started as a clone of the [authors' PR-CLIP repository](https://github.com/ADMIS-TONGJI/PR-CLIP). Its original Git commits and attribution are preserved. The research and original model belong to Jihong Guan, Yulou Shu, Wengen Li, Zihan Song, and Yichao Zhang. The upstream repository states that it builds on ITRA.
+Kho mã này được tạo từ bản sao của [kho PR-CLIP chính thức của nhóm tác giả](https://github.com/ADMIS-TONGJI/PR-CLIP). Lịch sử commit và thông tin ghi công ban đầu vẫn được giữ nguyên. Công trình nghiên cứu và mô hình gốc thuộc về Jihong Guan, Yulou Shu, Wengen Li, Zihan Song và Yichao Zhang. Kho mã nguồn cho biết PR-CLIP được xây dựng dựa trên ITRA.
 
-The new commits on the `reproduction` branch are authored as **Codex <codex@local>** to distinguish this implementation and audit from the paper authors' work and from the machine owner's identity. They add:
+Các commit mới trên nhánh `reproduction` dùng tác giả **Codex <codex@local>** để phân biệt phần triển khai và kiểm toán này với công trình của nhóm tác giả bài báo, đồng thời không dùng danh tính của chủ máy. Các đóng góp mới gồm:
 
-1. Independent PyTorch implementation of the paper's bidirectional CMC and token-level PRC objectives, cross-modal extraction, filtering, and reconstruction modules.
-2. Data download, dataset audit, retrieval metric, training, and evaluation commands.
-3. Real-dataset measurements, tests, a reproducibility report, and a Vietnamese learning guide.
+1. Bản triển khai PyTorch độc lập cho mục tiêu CMC hai chiều, PRC ở cấp token, module trích xuất xuyên phương thức, lọc và tái dựng được trình bày trong bài báo.
+2. Công cụ tải dữ liệu, kiểm toán tập dữ liệu, tính metric truy hồi, huấn luyện và đánh giá.
+3. Kết quả đo trên dữ liệu thật, bài kiểm thử, báo cáo tái lập và tài liệu học sâu bằng tiếng Việt.
 
-The changes are local to this Git repository. No pull request or remote GitHub repository has been created. The 770 MB smoke checkpoint is present in `results/` locally and excluded from Git history; the training script regenerates it.
+Các thay đổi hiện chỉ nằm trong kho Git cục bộ này. Chưa tạo pull request hay kho GitHub từ xa. Checkpoint thử nghiệm nhanh dung lượng 770 MB nằm cục bộ trong `results/` và không được đưa vào lịch sử Git; có thể tạo lại bằng script huấn luyện.
