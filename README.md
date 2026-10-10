@@ -1,5 +1,9 @@
 # PR-CLIP: A New Multimodal Remote Sensing Retrieval Model Based on Cross-Modal Positional Information Reconstruction
 
+## Independent reproduction work
+
+This branch preserves the authors' repository history and adds an independent implementation, dataset audit, real-dataset measurements, and learning material. Start with [the reproducibility report](REPRODUCTION.md), [the Vietnamese learning guide](LEARNING_GUIDE.vi.md), and [the contribution record](CONTRIBUTIONS.md). The paper's published PR-CLIP scores have **not** been reproduced; the official checkpoint link currently points to an image archive. See the report for exact results, setup commands, and the observed paper/code differences.
+
 This is the repository of PR-CLIP: A New Multimodal Remote Sensing Retrieval Model Based on Cross-Modal Positional Information Reconstruction.
 
 PR-CLIP is trained with the [`ITRA`](https://itra.readthedocs.io/) codebase
