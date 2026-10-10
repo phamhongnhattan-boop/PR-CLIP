@@ -1,0 +1,7 @@
+# Tested with Python 3.12 on Windows; install a CUDA-enabled PyTorch wheel if using NVIDIA.
+torch==2.5.1
+torchvision==0.20.1
+open_clip_torch==2.20.0
+numpy==2.5.3
+Pillow==12.3.0
+pytest==8.3.5
