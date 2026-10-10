@@ -1,0 +1,8 @@
+{
+  "model": "OpenAI CLIP ViT-B/32 via open_clip_torch 2.20.0",
+  "input": "one random 224x224 RGB tensor and one caption",
+  "image_token_shape": [1, 50, 768],
+  "text_token_shape": [1, 77, 512],
+  "image_global_max_abs_difference": 0.0,
+  "text_global_max_abs_difference": 0.0
+}

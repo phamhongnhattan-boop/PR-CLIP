@@ -19,6 +19,8 @@ The detailed six Recall@K values and machine-readable metadata are in `results/r
 
 `repro/prclip.py` implements equations (3)-(13): CLIP-style bidirectional InfoNCE, projected image/text tokens, a two-layer joint self-attention encoder, subtraction and linear filtering, shared eight-layer cross-attention decoder, and bidirectional token-wise squared-L2 reconstruction. `repro/openclip_tokens.py` exposes ViT-B/32 image and text token sequences from OpenCLIP. At retrieval time, `repro/evaluate.py` uses only the CLIP encoders, as the paper describes.
 
+As a direct consistency check, the global image and text vectors returned by `encode_with_tokens` matched OpenCLIP's native `encode_image` and `encode_text` exactly (maximum absolute difference 0.0 for a 224×224 test tensor and one caption). The token tensor shapes were `[1,50,768]` and `[1,77,512]`.
+
 The default loss is the **literal paper interpretation**. It averages squared L2 error across valid tokens (including the image CLS and text EOT tokens) and directions. This choice is explicit because the paper does not give executable masking and token-boundary details. The contrastive temperature is learned from a 0.07 initialization.
 
 ## Data audit
@@ -38,6 +40,7 @@ The [official image archive](https://drive.google.com/file/d/15htMe2iE4kVujjWURx
 | RSICD validation | Separate validation implied | `rsicd_val.csv` is byte-for-byte identical to `rsicd_test.csv` | Validation cannot be used for unbiased RSICD model selection without a new split. |
 | Checkpoint link | Pretrained weights needed for exact evaluation | README points to the same 1.4 GB image archive for both images and checkpoints | Exact published-checkpoint evaluation is unavailable from the linked file. |
 | Standalone retrieval script | Test command in README | `retrieval.py` uses undefined `DATASET_PATH`, `model_name`, and `dataset_name`, and passes a CSV to a JSON loader | The README command cannot run unmodified. |
+| Declared dependencies | README lists the packages needed to run | `model/model.py` imports `cn_clip` and `sentence_transformers` unconditionally, although the README requirements omit them | Importing the upstream model fails in a clean environment; the independent `repro` package avoids these optional dependencies. |
 
 These are observations about the released files, not claims about author intent. A close reproduction requires the actual pretrained RET-2 weights, the final PR-CLIP checkpoint, the exact loss and learning-rate configuration used, and an independent validation split.
 
