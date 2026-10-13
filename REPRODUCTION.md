@@ -6,6 +6,8 @@ Nguồn: Guan và cộng sự, *PR-CLIP: Cross-Modal Positional Reconstruction f
 
 **Kết quả: đã hoàn thành phần triển khai và đánh giá trên dữ liệu thật; chưa tái lập được điểm PR-CLIP công bố trong bài báo.** URL checkpoint trong README chính thức trả về `images.tar.gz`, không phải trọng số mô hình. Máy dùng cho lần chạy này có một GPU RTX 4060 Laptop với 8 GB VRAM; bài báo sử dụng hai GPU RTX 4090. Một phép thử toàn tuyến gồm hai bước huấn luyện đã được chạy với cấu hình mặc định của bài báo: 2 lớp trích xuất và 8 lớp tái dựng. Phép thử này không thể ước lượng hiệu năng của mô hình đã hội tụ.
 
+Các phép đối chứng 100 bước tiếp theo, gồm CMC-only và loss tái tạo kiểu mã phát hành, cùng số đo validation/test được trình bày trong [ABLATION.md](ABLATION.md). Đây là thí nghiệm giới hạn tài nguyên, không phải số tái lập PR-CLIP.
+
 | Tập dữ liệu | Ảnh / caption trong tập test | mR PR-CLIP trong bài báo | mR baseline OpenAI CLIP ViT-B/32 | mR PR-CLIP sau 2 bước thử |
 | --- | ---: | ---: | ---: | ---: |
 | RSITMD | 452 / 2.260 | 52,41% | 24,2330% | 24,2330% |

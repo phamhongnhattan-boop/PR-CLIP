@@ -15,3 +15,5 @@ Các thay đổi hiện chỉ nằm trong kho Git cục bộ này. Chưa tạo p
 - Commit `57e2b52`: triển khai và kiểm thử CMC hai chiều trong `exercises/cmc_loss.py` với 2 cặp giả lập.
 - Commit `b02a9b1`: triển khai PRC cấp token, bỏ qua token đệm và kiểm thử kết quả 2,5.
 - Commit `aaea929`: triển khai loss tái tạo theo mã phát hành trong `exercises/released_rec_loss.py` và kiểm thử ví dụ cho kết quả `1,0`.
+- Commit `07b256c`: thêm chế độ loss `released_like` để so sánh riêng với công thức theo bài báo.
+- NHAT TAN chạy ba phép huấn luyện đối chứng 100 bước trên 200 cặp RET-2 và đo validation cho hai checkpoint đầu. Codex kiểm tra log, đo validation cho `released_like`, đo test cho checkpoint CMC-only và tổng hợp bảng kết quả trong `ABLATION.md`; các số đo không được trình bày như kết quả PR-CLIP công bố.
