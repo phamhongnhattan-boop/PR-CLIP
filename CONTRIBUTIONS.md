@@ -9,3 +9,7 @@ Các commit mới trên nhánh `reproduction` dùng tác giả **Codex <codex@lo
 3. Kết quả đo trên dữ liệu thật, bài kiểm thử, báo cáo tái lập và tài liệu học sâu bằng tiếng Việt.
 
 Các thay đổi hiện chỉ nằm trong kho Git cục bộ này. Chưa tạo pull request hay kho GitHub từ xa. Checkpoint thử nghiệm nhanh dung lượng 770 MB nằm cục bộ trong `results/` và không được đưa vào lịch sử Git; có thể tạo lại bằng script huấn luyện.
+
+## Thực hành của NHAT TAN
+
+- Commit `57e2b52`: triển khai và kiểm thử CMC hai chiều trong `exercises/cmc_loss.py` với 2 cặp giả lập.
