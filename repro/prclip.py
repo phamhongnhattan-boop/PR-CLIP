@@ -8,12 +8,14 @@ import math
 import torch
 from torch import nn
 from torch.nn import functional as F
+from exercises.released_rec_loss import released_rec_loss
 
 
 class PositionalReconstruction(nn.Module):
     def __init__(self, image_width=768, text_width=512, width=512,
                  heads=8, extraction_layers=2, reconstruction_layers=8,
-                 lambda_cmc=0.01, lambda_prc=1.0, temperature=0.07):
+                 lambda_cmc=0.01, lambda_prc=1.0, temperature=0.07,
+                 loss_mode="paper"):
         super().__init__()
         self.image_projection = nn.Linear(image_width, width)
         self.text_projection = nn.Linear(text_width, width)
@@ -27,6 +29,7 @@ class PositionalReconstruction(nn.Module):
         self.lambda_cmc = lambda_cmc
         self.lambda_prc = lambda_prc
         self.logit_scale = nn.Parameter(torch.tensor(math.log(1 / temperature)))
+        self.loss_mode = loss_mode
 
     def forward(self, image_tokens, text_tokens, image_global, text_global,
                 text_padding_mask=None):
@@ -58,7 +61,16 @@ class PositionalReconstruction(nn.Module):
         logits = image_global @ text_global.T * self.logit_scale.exp().clamp(max=100)
         labels = torch.arange(logits.size(0), device=logits.device)
         cmc = (F.cross_entropy(logits, labels) + F.cross_entropy(logits.T, labels)) / 2
-        return {"loss": self.lambda_cmc * cmc + self.lambda_prc * prc,
+        if self.loss_mode == "released_like":
+            loss = released_rec_loss(
+                image_reconstructed.float(), text_reconstructed.float(),
+                image_global, text_global
+                )
+        elif self.loss_mode == "paper":
+            loss = self.lambda_cmc * cmc + self.lambda_prc * prc
+        else:
+            raise ValueError(f"Unknown loss mode: {self.loss_mode}")
+        return {"loss": loss,
                 "cmc": cmc, "prc": prc, "image_prc": image_prc,
                 "text_prc": text_prc,
                 "image_reconstructed": image_reconstructed,

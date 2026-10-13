@@ -58,6 +58,7 @@ def main():
     parser.add_argument("--reconstruction-layers", type=int, default=8)
     parser.add_argument("--lambda-cmc", type=float, default=0.01)
     parser.add_argument("--lambda-prc", type=float, default=1.0)
+    parser.add_argument("--loss-mode", choices=("paper", "released_like"), default="paper")
     parser.add_argument("--temperature", type=float, default=0.07)
     parser.add_argument("--max-pairs", type=int, default=0)
     parser.add_argument("--max-steps", type=int, default=0)
@@ -83,7 +84,8 @@ def main():
         reconstruction_layers=args.reconstruction_layers,
         lambda_cmc=args.lambda_cmc,
         lambda_prc=args.lambda_prc,
-        temperature=args.temperature).to(device)
+        temperature=args.temperature,
+        loss_mode=args.loss_mode).to(device)
     pairs = Pairs(args.csv, args.images, preprocess_train, args.max_pairs, args.seed)
     loader = DataLoader(pairs, batch_size=args.batch_size, shuffle=True, num_workers=0,
                         drop_last=True)
