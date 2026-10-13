@@ -13,3 +13,4 @@ Các thay đổi hiện chỉ nằm trong kho Git cục bộ này. Chưa tạo p
 ## Thực hành của NHAT TAN
 
 - Commit `57e2b52`: triển khai và kiểm thử CMC hai chiều trong `exercises/cmc_loss.py` với 2 cặp giả lập.
+- Commit `b02a9b1`: triển khai PRC cấp token, bỏ qua token đệm và kiểm thử kết quả 2,5.
