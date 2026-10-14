@@ -2,7 +2,7 @@
 
 ## Phần tái lập độc lập
 
-Nhánh này giữ nguyên lịch sử kho mã của tác giả và bổ sung một bản triển khai độc lập, kiểm toán dữ liệu, kết quả đo trên dữ liệu thật cùng tài liệu học sâu. Hãy bắt đầu với [báo cáo tái lập](REPRODUCTION.md), [hướng dẫn học sâu bằng tiếng Việt](LEARNING_GUIDE.vi.md) và [thông tin đóng góp](CONTRIBUTIONS.md). Điểm số PR-CLIP được công bố trong bài báo **chưa được tái lập**; liên kết checkpoint chính thức hiện trỏ tới một kho ảnh. Báo cáo trình bày kết quả chính xác, lệnh thiết lập và các khác biệt đã phát hiện giữa bài báo với mã nguồn.
+Nhánh này giữ nguyên lịch sử kho mã của tác giả và bổ sung một bản triển khai độc lập, kiểm toán dữ liệu, kết quả đo trên dữ liệu thật cùng tài liệu học sâu. Hãy bắt đầu với [bản bóc tách từng mô-đun](MODULE_BREAKDOWN.vi.md), [báo cáo tái lập](REPRODUCTION.md), [hướng dẫn học sâu bằng tiếng Việt](LEARNING_GUIDE.vi.md) và [thông tin đóng góp](CONTRIBUTIONS.md). Điểm số PR-CLIP được công bố trong bài báo **chưa được tái lập**; liên kết checkpoint chính thức hiện trỏ tới một kho ảnh. Báo cáo trình bày kết quả chính xác, lệnh thiết lập và các khác biệt đã phát hiện giữa bài báo với mã nguồn.
 
 Đây là kho mã của PR-CLIP: mô hình truy hồi viễn thám đa phương thức dựa trên tái dựng thông tin vị trí xuyên phương thức.
 

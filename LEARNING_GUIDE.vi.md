@@ -1,6 +1,6 @@
 # Học sâu PR-CLIP: từ bài toán đến giới hạn tái lập
 
-Tài liệu này dựa trên Guan và cộng sự, [*PR-CLIP: Cross-Modal Positional Reconstruction for Remote Sensing Image–Text Retrieval*](https://doi.org/10.3390/rs17132117), và kiểm tra mã nguồn [ADMIS-TONGJI/PR-CLIP](https://github.com/ADMIS-TONGJI/PR-CLIP). Hãy đọc `REPRODUCTION.md` trước khi dùng bất kỳ con số đo nào ở đây để so sánh mô hình.
+Tài liệu này dựa trên Guan và cộng sự, [*PR-CLIP: Cross-Modal Positional Reconstruction for Remote Sensing Image–Text Retrieval*](https://doi.org/10.3390/rs17132117), và kiểm tra mã nguồn [ADMIS-TONGJI/PR-CLIP](https://github.com/ADMIS-TONGJI/PR-CLIP). Xem `MODULE_BREAKDOWN.vi.md` để lần theo đủ 4 phần của kiến trúc và từng tệp mã; đọc `REPRODUCTION.md` trước khi dùng bất kỳ con số đo nào ở đây để so sánh mô hình.
 
 ## 1. Bài toán thật sự là gì?
 
@@ -26,7 +26,7 @@ Vector toàn cục của ViT/text ── InfoNCE hai chiều ── retrieval
 V/T tái dựng so với V/T gốc ── PRC loss
 ```
 
-`V` và `T` ở sơ đồ sau phép chiếu. Mã độc lập nằm ở `repro/prclip.py`; cách lấy token từ OpenCLIP nằm ở `repro/openclip_tokens.py`.
+`V` và `T` ở sơ đồ sau phép chiếu. CLIP nằm ở `repro/openclip_tokens.py`; ba mô-đun bổ sung nằm riêng trong `repro/position_extraction.py`, `repro/position_filtering.py`, `repro/position_reconstruction.py`. `repro/prclip.py` nối chúng và tính loss. Bài báo tính **4 mô-đun nếu kể cả CLIP**.
 
 ## 3. Đi qua từng phương trình
 

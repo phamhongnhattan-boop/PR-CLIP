@@ -46,6 +46,10 @@ Loss mặc định dùng **cách diễn giải sát công thức trong bài báo
 
 Đây là các quan sát về file được phát hành, không phải suy đoán về ý định của tác giả. Một phép tái lập sát bài báo cần trọng số RET-2 đã huấn luyện trước, checkpoint PR-CLIP cuối cùng, cấu hình loss và learning rate thực sự được dùng, cùng một tập validation độc lập.
 
+## Cấu trúc mô-đun
+
+Xem [bản bóc tách từng mô-đun](MODULE_BREAKDOWN.vi.md): bộ mã hóa CLIP, ba mô-đun bổ sung trích xuất/lọc/tái dựng, kích thước tensor, loss và đường suy luận. Việc tách ba mô-đun thành tệp riêng giữ nguyên công thức và tên trọng số của các checkpoint đã tạo; các số đo bên dưới không thay đổi vì lần chỉnh mã này.
+
 ## Chạy lại thí nghiệm
 
 Dùng Python 3.12 và cài `requirements-repro.txt`. Trên Windows có GPU NVIDIA, trước hết cài PyTorch 2.5.1 CUDA 12.1 từ [kho wheel chính thức của PyTorch](https://download.pytorch.org/whl/cu121), rồi cài các dependency còn lại. Lần chạy này dùng PyTorch 2.5.1+cu121, torchvision 0.20.1+cu121, OpenCLIP 2.20.0, NumPy 2.5.3 và Pillow 12.3.0.

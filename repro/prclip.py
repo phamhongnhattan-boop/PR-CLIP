@@ -9,6 +9,9 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from exercises.released_rec_loss import released_rec_loss
+from .position_extraction import CrossModalPositionExtractor
+from .position_filtering import UnimodalPositionFilter
+from .position_reconstruction import CrossModalPositionReconstructor
 
 
 class PositionalReconstruction(nn.Module):
@@ -21,11 +24,11 @@ class PositionalReconstruction(nn.Module):
         self.text_projection = nn.Linear(text_width, width)
         enc = nn.TransformerEncoderLayer(width, heads, width * 4, batch_first=True, norm_first=True)
         dec = nn.TransformerDecoderLayer(width, heads, width * 4, batch_first=True, norm_first=True)
-        self.extraction = nn.TransformerEncoder(enc, extraction_layers)
+        self.extraction = CrossModalPositionExtractor(enc, extraction_layers)
         # The official source shares decoder weights for the two directions.
-        self.reconstruction = nn.TransformerDecoder(dec, reconstruction_layers)
-        self.image_filter = nn.Linear(width, width)
-        self.text_filter = nn.Linear(width, width)
+        self.reconstruction = CrossModalPositionReconstructor(dec, reconstruction_layers)
+        self.image_filter = UnimodalPositionFilter(width, width)
+        self.text_filter = UnimodalPositionFilter(width, width)
         self.lambda_cmc = lambda_cmc
         self.lambda_prc = lambda_prc
         self.logit_scale = nn.Parameter(torch.tensor(math.log(1 / temperature)))
@@ -37,20 +40,24 @@ class PositionalReconstruction(nn.Module):
             raise ValueError("Token embeddings must have shape [batch, tokens, width]")
         image = self.image_projection(image_tokens)
         text = self.text_projection(text_tokens)
-        ni = image.shape[1]
         if text_padding_mask is None:
             text_padding_mask = torch.zeros(text.shape[:2], device=text.device, dtype=torch.bool)
         if text_padding_mask.shape != text.shape[:2]:
             raise ValueError("text_padding_mask shape must match text tokens")
-        joint_mask = torch.cat([torch.zeros(image.shape[:2], device=image.device, dtype=torch.bool),
-                                text_padding_mask], dim=1)
-        joint = self.extraction(torch.cat([image, text], dim=1), src_key_padding_mask=joint_mask)
-        image_filtered = self.image_filter(image - joint[:, :ni])
-        text_filtered = self.text_filter(text - joint[:, ni:])
-        image_reconstructed = self.reconstruction(image_filtered, text,
-                                                   memory_key_padding_mask=text_padding_mask)
-        text_reconstructed = self.reconstruction(text_filtered, image,
-                                                  tgt_key_padding_mask=text_padding_mask)
+        # 1. Cross-modal extraction: each output retains its source token count.
+        image_position, text_position = self.extraction(
+            image, text, text_padding_mask
+        )
+        # 2. Unimodal filtering: subtract extracted features before projection.
+        image_filtered = self.image_filter(image, image_position)
+        text_filtered = self.text_filter(text, text_position)
+        # 3. Cross-modal reconstruction: share one decoder in both directions.
+        image_reconstructed = self.reconstruction(
+            image_filtered, text, memory_padding_mask=text_padding_mask
+        )
+        text_reconstructed = self.reconstruction(
+            text_filtered, image, target_padding_mask=text_padding_mask
+        )
         # Equation (12): mean over tokens of squared L2 distance, then mean over batch.
         image_prc = (image_reconstructed - image).square().sum(dim=-1).mean()
         text_error = (text_reconstructed - text).square().sum(dim=-1)
@@ -65,7 +72,7 @@ class PositionalReconstruction(nn.Module):
             loss = released_rec_loss(
                 image_reconstructed.float(), text_reconstructed.float(),
                 image_global, text_global
-                )
+            )
         elif self.loss_mode == "paper":
             loss = self.lambda_cmc * cmc + self.lambda_prc * prc
         else:
