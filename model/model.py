@@ -7,15 +7,14 @@ import numpy as np
 
 import torchvision
 import open_clip
-import cn_clip.clip as cn_clip
 from transformers import AutoConfig, AutoTokenizer, AutoModel, BertForSequenceClassification
-
-import adapters
-from sentence_transformers import SentenceTransformer
 
 from training.distributed import is_master
 from training.projection import DINOHead
 import training.transforms
+from model.openclip_hidden import visual_tokens
+from model.position_extraction import extract_positional_residuals
+from model.paper_objective import positional_reconstruction_loss
 
 from loss import NEED_LOGIT_SCALE, NEED_PROTOTYPE_LAYER
 from contextlib import suppress
@@ -46,6 +45,12 @@ def get_model(args):
             cache_dir=os.path.join(args.cache_dir, 'open_clip')
         )
         if args.load_clip_weights:
+            if not os.path.isfile(args.load_clip_weights_from):
+                raise FileNotFoundError(
+                    f"Missing CLIP checkpoint: {args.load_clip_weights_from}. "
+                    "Supply --load-clip-weights-from, or run an explicitly "
+                    "non-equivalent OpenAI initialization with --no-load-clip-weights."
+                )
             checkpoint = torch.load(args.load_clip_weights_from, map_location="cpu")
             msg = CLIP_model.load_state_dict(checkpoint)
             logging.info(f"text: {msg}")
@@ -60,6 +65,7 @@ def get_model(args):
             raise RuntimeError(f'Adapter {args.adapter} is not avaliable for {args.text_model_builder} models!')
             
     elif args.text_model_builder=='chineseclip':
+        import cn_clip.clip as cn_clip
         CLIP_model, preprocess_val = cn_clip.load_from_name(
             name=args.text_model, 
             device=args.device, 
@@ -91,6 +97,7 @@ def get_model(args):
         args.text_width = None
                 
         if args.adapter is not None:
+            import adapters
             if args.adapter=='bottleneck_adapter':
                 config = adapters.AdapterConfig(mh_adapter=True, output_adapter=True, reduction_factor=16, non_linearity="relu")
             elif args.adapter=='prefix_tuning':
@@ -115,6 +122,7 @@ def get_model(args):
             text_backbone.train_adapter(args.adapter)
             
     elif args.text_model_builder=='sbert':
+        from sentence_transformers import SentenceTransformer
         if not args.pretrained_text_model and is_master(args):
             logging.info(f'Sentence-transormer uses pretrained weight by default!')
         text_backbone = SentenceTransformer(args.text_model, device=args.device).to(args.device)
@@ -163,6 +171,7 @@ def get_model(args):
 
         
     elif args.image_model_builder=='chineseclip':
+        import cn_clip.clip as cn_clip
         CLIP_model, preprocess_val = cn_clip.load_from_name(
             name=args.text_model, 
             device=args.device, 
@@ -284,6 +293,7 @@ class ItraModel(nn.Module):
         self.text_model_builder = args.text_model_builder
         self.image_model_builder = args.image_model_builder
         self.max_seq_length = args.max_seq_length
+        self.prclip_objective = getattr(args, "prclip_objective", "released")
             
         self.image_context = torch.no_grad if (
             args.lock_image_model and 
@@ -401,6 +411,7 @@ class ItraModel(nn.Module):
         self.loss = 0 
         self.to(self.device)
         self.text_hidden = torch.tensor(1)
+        self.text_padding_mask = None
 
     def reinit_logit_scale(self, logit_scale):
         self.logit_scale = torch.nn.parameter.Parameter(torch.ones(1) * np.log(1 / logit_scale))#.to(self.device)
@@ -453,6 +464,9 @@ class ItraModel(nn.Module):
                 # TODO: support CoOp-style prompting (CoOp for retrieval finetuning?)
                 context_length = (77 - self.n_prompt) if self.prompt is not None else 77
                 texts = self.tokenizer(texts, context_length=context_length).to(self.device)
+                eot_positions = texts.argmax(dim=-1)
+                positions = torch.arange(texts.shape[1], device=texts.device)[None, :]
+                self.text_padding_mask = positions > eot_positions[:, None]
                 def open_clip_forward(texts):
                     x = self.text_backbone.token_embedding(texts)  # [batch_size, n_ctx, d_model] (bs, 77-args.n_prompts, 512)
                     if self.prompt is not None:
@@ -586,23 +600,24 @@ class ItraModel(nn.Module):
             image_features = self.encode_image(images, projection=True)
         
         text_embed = self.proj_text(self.text_hidden)
-        image_embed = self.proj_image(self.image_backbone(images, return_hidden=True))
+        image_embed = self.proj_image(visual_tokens(self.image_backbone, images))
         # print(a.shape)
         # print([text_embed.shape, image_embed.shape])
         # image_o_features = F.normalize(torch.mean(image_embed, dim=1).to(self.device), dim=-1)
         # text_o_features = F.normalize(torch.mean(text_embed, dim=1).to(self.device), dim=-1)
 
-        it_seq = torch.cat([image_embed, text_embed], dim = 1).to(self.device)
-        i_len = image_embed.size()[1]
-        # text_masks = (texts != 0).long().to(self.device) 
-        text_masks = torch.ones(text_embed.size()[:-1],dtype=torch.long).to(self.device)
+        if self.prclip_objective == "paper":
+            text_padding_mask = self.text_padding_mask
+            text_masks = (~text_padding_mask).long()
+        else:
+            text_padding_mask = None
+            text_masks = torch.ones(text_embed.size()[:-1],dtype=torch.long).to(self.device)
         image_masks = torch.ones(image_embed.size()[:-1],dtype=torch.long).to(self.device)
-        # it_masks = torch.ones(it_seq.size()[:-1],dtype=torch.long).to(self.device)
 
-        att_embed = self.it_encoder(it_seq)
-
-        image_res_embed = self.fc_image(image_embed - att_embed[:,:i_len,:])
-        text_res_embed = self.fc_text(text_embed - att_embed[:,i_len:,:])
+        image_res_embed, text_res_embed = extract_positional_residuals(
+            image_embed, text_embed, self.it_encoder, self.fc_image, self.fc_text,
+            text_padding_mask=text_padding_mask,
+        )
 
         image_output = self.fusion_model(image_res_embed, image_masks, text_embed, text_masks)
         text_output = self.fusion_model(text_res_embed, text_masks, image_embed, image_masks)
@@ -625,7 +640,12 @@ class ItraModel(nn.Module):
         # print(image_features.size(), image_o_features.size(), text_features.size(), text_o_features.size())
         
         # total_loss = 0.1 * info_nce_loss + triplet_loss + rec_los
-        self.total_loss = rec_loss # + rec_loss2 # + triplet_loss + rec_loss 
+        if self.prclip_objective == "paper":
+            self.total_loss = positional_reconstruction_loss(
+                image_output, text_output, image_embed, text_embed, text_padding_mask
+            )
+        else:
+            self.total_loss = rec_loss # + rec_loss2 # + triplet_loss + rec_loss
         self.total_loss = self.total_loss.to(self.device)
 
         return image_features, text_features, self.logit_scale.exp(), self.total_loss

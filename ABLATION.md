@@ -2,7 +2,7 @@
 
 ## Mục đích và cấu hình
 
-Các phép chạy này so sánh ba mục tiêu huấn luyện trong **cùng một bản triển khai độc lập**, không phải huấn luyện PR-CLIP theo đúng cấu hình công bố. Cả ba bắt đầu từ OpenAI CLIP ViT-B/32, vì checkpoint tiền huấn luyện `RET-2.pt` không có trong dữ liệu được cung cấp. Mỗi phép chạy lấy cùng 200 cặp từ `dataset/train/ret2.csv` với seed 3407, huấn luyện 100 bước, batch 2, một epoch, learning rate 5e-6, warm-up 10 bước, hai lớp extraction và tám lớp reconstruction. Checkpoint khoảng 770 MB mỗi file được giữ cục bộ ngoài Git.
+Các phép chạy này so sánh ba mục tiêu huấn luyện trong **cùng một bản triển khai độc lập**, không phải huấn luyện PR-CLIP theo đúng cấu hình công bố. Cả ba bắt đầu từ OpenAI CLIP ViT-B/32 và huấn luyện trên một phần RET-2. **RET-2 là dữ liệu; `RET-2.pt` là checkpoint khởi tạo riêng, hiện chưa có.** Mỗi phép chạy lấy cùng 200 cặp từ `dataset/train/ret2.csv` với seed 3407, huấn luyện 100 bước, batch 2, một epoch, learning rate 5e-6, warm-up 10 bước, hai lớp extraction và tám lớp reconstruction. Checkpoint khoảng 770 MB mỗi file được giữ cục bộ ngoài Git.
 
 | Tên | Lệnh chọn mục tiêu | Loss thực sự dùng để cập nhật |
 | --- | --- | --- |
@@ -23,7 +23,7 @@ Tập validation có 856 ảnh và 4.280 caption. Tất cả giá trị mR dư�
 | Chỉ CMC, 100 bước | **18,5864** |
 | Tái tạo kiểu mã phát hành, 100 bước | 0,7516 |
 
-Trong phép thử nhỏ này, CMC-only cao hơn CLIP ban đầu 1,8185 điểm phần trăm. Hai chế độ có tái tạo làm giảm mạnh chất lượng truy hồi. Loss tái tạo giảm không bảo đảm thứ hạng ảnh–câu được giữ hoặc cải thiện. Kết quả không chứng minh PRC trong bài báo vô ích: trọng số RET-2, batch size, kiến trúc fusion và công thức loss của mã phát hành khác thiết lập ở đây. Quy mô loss cũng không đủ để suy ra quy mô gradient nếu chưa đo trực tiếp.
+Trong phép thử nhỏ này, CMC-only cao hơn CLIP ban đầu 1,8185 điểm phần trăm. Hai chế độ có tái tạo làm giảm mạnh chất lượng truy hồi. Loss tái tạo giảm không bảo đảm thứ hạng ảnh–câu được giữ hoặc cải thiện. Kết quả không chứng minh PRC trong bài báo vô ích: trọng số khởi tạo, batch size, kiến trúc fusion và công thức loss của mã phát hành khác thiết lập ở đây. Quy mô loss cũng không đủ để suy ra quy mô gradient nếu chưa đo trực tiếp.
 
 Các JSON validation và log từng bước được lưu trong `results/learner_ablation/`. Log giữ nguyên cấu hình và đường dẫn tuyệt đối của máy chạy. Checkpoint tương ứng nằm trong `work/tmp/` ngoài Git; có thể tạo lại từ các cấu hình trên.
 
@@ -40,7 +40,7 @@ Các file chi tiết gồm `results/rsitmd_cmc_only_100steps.json`, `results/rsi
 
 ## Để tiếp tục tái lập sát bài báo
 
-1. Lấy đúng checkpoint RET-2 và xác minh định dạng trọng số trước khi nạp.
+1. Có trọng số khởi tạo `RET-2.pt` để theo đúng mặc định mã phát hành, rồi chạy đủ quá trình huấn luyện trên toàn bộ RET-2; hoặc lấy checkpoint PR-CLIP cuối để kiểm chứng trực tiếp điểm số công bố.
 2. Làm rõ công thức loss và cấu hình thực sự dùng cho các bảng kết quả, vì bài báo và mã phát hành khác nhau.
 3. Có tài nguyên phù hợp với batch size 100/160 và nhiều epoch; batch 2 thay đổi số mẫu âm của InfoNCE.
 4. Dùng tập validation độc lập để chọn checkpoint, rồi chỉ đánh giá test sau khi cố định cấu hình.

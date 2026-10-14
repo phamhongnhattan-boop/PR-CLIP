@@ -22,3 +22,9 @@ Nhánh `learn-cmc` đã được đẩy lên [fork của NHAT TAN](https://githu
 
 - Codex tách phần trích xuất, lọc và tái dựng đang nằm trong `repro/prclip.py` thành ba lớp trong ba tệp `repro/position_*.py`, giữ nguyên tên trọng số và kết quả tính toán để checkpoint cũ vẫn tương thích.
 - Codex bổ sung `MODULE_BREAKDOWN.vi.md` trình bày cả bộ mã hóa CLIP, kích thước tensor, luồng tính loss và đường suy luận; đây là tài liệu giải thích bản triển khai độc lập, không tuyên bố đã tái lập điểm số của bài báo.
+
+## Đường chạy theo `ItraModel` gốc, 14/10/2026
+
+Theo yêu cầu của NHAT TAN muốn trình bày phần trích xuất ngay trong mô hình tác giả, Codex tách phép ghép token, tương tác xuyên phương thức, tách và trừ theo vị trí thành `model/position_extraction.py`, rồi nối hàm này vào `ItraModel.forward`. Tên các lớp và trọng số gốc vẫn được giữ. Codex cũng thêm đường lấy token OpenCLIP tương thích, chế độ loss `paper` và `released`, script PowerShell cho kiểm tra nhỏ và huấn luyện theo cấu hình bài báo, kiểm thử tự động, tài liệu từng mô-đun và bảng validation RSITMD/RSICD. NHAT TAN cung cấp ZIP mã nguồn và xác nhận không có checkpoint `RET-2.pt`.
+
+Các phép kiểm tra này khởi tạo từ OpenAI CLIP, dùng hai cặp RET-2 và một bước tối ưu. Kết quả được công bố trong `results/official_itra_paper_smoke_validation.json`; chúng không phải điểm số PR-CLIP đã huấn luyện hội tụ. Mã nguồn, tài liệu và kết quả đo được commit với tác giả Codex để phân biệt rõ với các commit thực hành do NHAT TAN tự viết.

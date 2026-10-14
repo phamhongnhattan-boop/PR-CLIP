@@ -141,6 +141,12 @@ def parse_args():
     parser.add_argument("--dino-teacher-temp", type=float, default=0.04, help="")
     parser.add_argument("--w-simcse", type=float, default=0.0, help="simcse dropout-based contrastive")
     parser.add_argument("--w-align", type=float, default=1.0, help="")   
+    parser.add_argument(
+        "--prclip-objective", choices=["released", "paper"], default="released",
+        help="Released ITRA training loss or the PR-CLIP paper's 0.01 CMC + token PRC objective",
+    )
+    parser.add_argument("--lambda-cmc", type=float, default=0.01)
+    parser.add_argument("--lambda-prc", type=float, default=1.0)
     parser.add_argument("--logit-scale", type=float, default=0.07, help="initialization of InfoNCE learnable temperature")
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
@@ -265,6 +271,11 @@ def parse_args():
         "--save-frequency", type=int, default=1, help="How often to save checkpoints."
     )
     parser.add_argument(
+        "--no-save-checkpoints",
+        action="store_true",
+        help="Run training and evaluation without writing large checkpoint files.",
+    )
+    parser.add_argument(
         "--save-most-recent",
         action="store_true",
         default=True,
@@ -349,6 +360,10 @@ def parse_args():
         choices=["amp", "fp16", "fp32"],
         default="amp",
         help="Floating point precision."
+    )
+    parser.add_argument(
+        "--amp-init-scale", type=float, default=65536.0,
+        help="Initial GradScaler value; lower it for large token-level PRC gradients",
     )
     parser.add_argument(
         "--max-grad-norm",
@@ -448,6 +463,10 @@ def parse_args():
     )
     parser.add_argument(
         "--load-clip-weights", default=True, action="store_true",
+    )
+    parser.add_argument(
+        "--no-load-clip-weights", dest="load_clip_weights", action="store_false",
+        help="Use the OpenAI CLIP weights when the released RET-2.pt file is unavailable",
     )
     parser.add_argument(
         "--load-clip-weights-from", default='./cache/weights/RET-2.pt', type=str,

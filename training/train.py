@@ -20,6 +20,7 @@ from .distributed import is_master, gather_features, get_gathered_item
 from loss import NEED_LOGIT_SCALE, NEED_GATHER, NEED_PROTOTYPE_LAYER
 
 from loss import CLIPLoss
+from model.paper_objective import paper_training_loss
 
 def train_one_epoch(
     model, 
@@ -67,6 +68,7 @@ def train_one_epoch(
 
     train_loader_size = len(dataloader)
     step_lou = 4
+    optimizer.zero_grad(set_to_none=True)
 
     for i, batch in enumerate(dataloader):
         # 
@@ -149,8 +151,15 @@ def train_one_epoch(
                         align_loss = loss(teacher_features, student_features, logit_scale=logit_scale)
                 else:
                     align_loss = loss(teacher_features, student_features)            
-                total_loss = args.w_align * align_loss + ssl_loss 
-                total_loss = (1.5 * total_loss + 1 * lou_loss ) / step_lou
+                if args.prclip_objective == "paper":
+                    if args.loss != "InfoNCE" or args.w_simcse != 0:
+                        raise ValueError("Paper objective requires InfoNCE and w_simcse=0")
+                    total_loss = paper_training_loss(
+                        align_loss, lou_loss, args.lambda_cmc, args.lambda_prc
+                    )
+                else:
+                    total_loss = args.w_align * align_loss + ssl_loss
+                    total_loss = (1.5 * total_loss + lou_loss) / step_lou
 
                 # total_loss = args.w_align * align_loss + ssl_loss + lou_loss
         
@@ -189,11 +198,12 @@ def train_one_epoch(
                 else:
                     scaler.step(optimizer)
                 scaler.update()
+                optimizer.zero_grad(set_to_none=True)
             else:
                 total_loss.backward()
                 
                 norm = nn.utils.clip_grad_norm_(model.parameters(), max_norm=args.max_grad_norm)
-                if (i + 1) % step_lou == 0 or i == train_loader_size - 1:
+                if args.prclip_objective == "paper" or (i + 1) % step_lou == 0 or i == train_loader_size - 1:
                     optimizer.step()
                     optimizer.zero_grad()
 

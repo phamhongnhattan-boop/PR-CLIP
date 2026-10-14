@@ -1,5 +1,29 @@
 # Báo cáo tái lập PR-CLIP
 
+## Đường chạy theo mã gốc `ItraModel` (14/10/2026)
+
+Sau khi kiểm tra ZIP mã nguồn gốc, nhánh này dùng trực tiếp `model.ItraModel`, `training.main` và bộ đánh giá phát hành. Module trích xuất được tách thành `model/position_extraction.py`; `model/openclip_hidden.py` sửa đường lấy token của OpenCLIP ViT-B/32; `model/paper_objective.py` thêm loss PRC cấp token và hệ số `0,01 × CMC + 1 × PRC`. Cờ `--prclip-objective released` vẫn chạy theo loss trong mã phát hành. Chi tiết từng bước nằm ở [OFFICIAL_ITRA.vi.md](OFFICIAL_ITRA.vi.md).
+
+ZIP được cung cấp **không chứa `RET-2.pt`**. Mã phát hành mặc định cần file này khi `--load-clip-weights` bật. Vì vậy lần kiểm tra dưới đây dùng cờ rõ ràng `--no-load-clip-weights` để khởi tạo từ OpenAI CLIP. Đây là khác biệt quan trọng so với checkpoint tác giả và phải giữ trong phần diễn giải kết quả.
+
+Đã chạy 1 bước tối ưu trên **2 cặp** lấy từ RET-2, batch 2, rồi đo toàn bộ tập validation bằng `ItraModel`:
+
+| Validation | Ảnh / caption | mR sau 1 bước (%) | mR công bố trên test (%) |
+| --- | ---: | ---: | ---: |
+| RSITMD | 856 / 4.280 | 16,41 | 52,41 |
+| RSICD | 1.093 / 5.465 | 15,51 | 39,23 |
+
+Sáu giá trị Recall@K và checksum CSV nằm trong [kết quả smoke `ItraModel`](results/official_itra_paper_smoke_validation.json). RSICD validation phát hành trùng từng byte với test; giá trị 15,51% không phải phép thử độc lập. Một bước trên hai cặp không thể chứng minh mô hình hội tụ hoặc tái lập điểm số bài báo. Các số ở cột cuối là kết quả **test** công bố, không so trực tiếp với validation.
+
+Để kiểm tra toàn tuyến trên máy hiện tại mà không tạo checkpoint hàng GB:
+
+```powershell
+.\scripts\run_official_smoke.ps1 -Dataset rsitmd -FullValidation
+.\scripts\run_official_smoke.ps1 -Dataset rsicd -FullValidation
+```
+
+Để huấn luyện đầy đủ với số epoch, batch size và learning rate nêu trong bài báo, dùng `scripts/train_official_paper.ps1`. Mặc định script yêu cầu `RET-2.pt`; thêm `-InitializeFromOpenAI` nếu không có file này và chấp nhận khác biệt khởi tạo. Máy dùng cho lần thử có GPU 8 GB và ổ đĩa không đủ để hoàn thành batch 100/160, 7/20 epoch và lưu các checkpoint lớn. **Chưa có phép chạy huấn luyện đầy đủ hoặc test PR-CLIP hội tụ.**
+
 ## Phạm vi và trạng thái
 
 Nguồn: Guan và cộng sự, *PR-CLIP: Cross-Modal Positional Reconstruction for Remote Sensing Image–Text Retrieval*, Remote Sensing 17(13), 2117 (2025), [DOI](https://doi.org/10.3390/rs17132117). Kho mã này dựa trên [mã nguồn chính thức](https://github.com/ADMIS-TONGJI/PR-CLIP) và giữ nguyên lịch sử của kho gốc. File PDF do người dùng cung cấp được xem là dữ liệu nghiên cứu, không phải chỉ dẫn thực thi.
@@ -44,7 +68,7 @@ Loss mặc định dùng **cách diễn giải sát công thức trong bài báo
 | Script truy hồi độc lập | README cung cấp lệnh test | `retrieval.py` dùng các biến chưa định nghĩa `DATASET_PATH`, `model_name`, `dataset_name` và truyền CSV cho bộ nạp JSON | Lệnh trong README không chạy được nếu không sửa. |
 | Dependency được khai báo | README liệt kê các gói cần thiết | `model/model.py` luôn import `cn_clip` và `sentence_transformers`, nhưng README không khai báo hai gói này | Import mô hình gốc thất bại trong môi trường sạch; gói `repro` độc lập tránh các dependency tùy chọn đó. |
 
-Đây là các quan sát về file được phát hành, không phải suy đoán về ý định của tác giả. Một phép tái lập sát bài báo cần trọng số RET-2 đã huấn luyện trước, checkpoint PR-CLIP cuối cùng, cấu hình loss và learning rate thực sự được dùng, cùng một tập validation độc lập.
+Đây là các quan sát về file được phát hành, không phải suy đoán về ý định của tác giả. **RET-2 là dữ liệu huấn luyện; `RET-2.pt` là file trọng số khởi tạo khác.** Mã phát hành mặc định yêu cầu file trọng số đó. Có thể huấn luyện với OpenAI CLIP nếu chọn cờ thay thế rõ ràng, nhưng không còn cùng điểm xuất phát với cấu hình mặc định của tác giả. Để kiểm chứng ngay điểm số công bố mà không huấn luyện lại, cần checkpoint PR-CLIP cuối cùng. Tái lập sát bài báo còn cần làm rõ cấu hình loss và learning rate thực sự được dùng, cùng một tập validation độc lập.
 
 ## Cấu trúc mô-đun
 
@@ -66,7 +90,7 @@ python -m repro.evaluate --csv dataset/test/rsicd_test.csv --images images/image
 
 Cấu hình mặc định trong `repro.train` theo công thức bài báo dành cho RSITMD là: 7 epoch, batch 100, learning rate 5e-6, 100 bước warm-up, weight decay 0,5, gradient clipping 50, hai lớp trích xuất, tám lớp tái dựng, λCMC=0,01 và λPRC=1. Với RSICD, dùng `--epochs 20 --batch-size 160 --lr 5e-5`. Cả hai cùng dùng CSV huấn luyện RET-2. Quá trình huấn luyện chạy đơn tiến trình và cần đủ bộ nhớ GPU; giảm `--batch-size` sẽ thay đổi tập mẫu âm của InfoNCE nên **không tương đương** với thí nghiệm trong bài báo.
 
-Nếu có file trọng số RET-2 hợp lệ theo định dạng OpenCLIP, truyền file qua `--initial-checkpoint path/to/RET-2.pt`. Lệnh sẽ nạp nghiêm ngặt và dừng nếu tên khóa không khớp; nó không tự đoán ánh xạ. Checkpoint PR-CLIP cuối của tác giả có thể dùng tên khóa riêng của ITRA và không được bảo đảm nạp được bằng `repro.evaluate` nếu chưa có bước chuyển đổi được kiểm toán rõ ràng.
+Nếu có file trọng số CLIP bổ sung hợp lệ theo định dạng OpenCLIP, có thể truyền file qua `--initial-checkpoint path/to/weights.pt`; đây là lựa chọn tùy ý, không phải điều kiện để dùng dữ liệu RET-2. Lệnh sẽ nạp nghiêm ngặt và dừng nếu tên khóa không khớp; nó không tự đoán ánh xạ. Checkpoint PR-CLIP cuối của tác giả có thể dùng tên khóa riêng của ITRA và không được bảo đảm nạp được bằng `repro.evaluate` nếu chưa có bước chuyển đổi được kiểm toán rõ ràng.
 
 Phép kiểm tra giới hạn tài nguyên đã chạy trong lần này:
 

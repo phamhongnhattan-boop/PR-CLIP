@@ -5,7 +5,10 @@ import os
 import random
 import numpy as np
 import yaml
-import wandb
+try:
+    import wandb
+except ImportError:
+    wandb = None
 import torch.utils.tensorboard as tensorboard
 
 import torch
@@ -73,6 +76,8 @@ def main():
     # init wandb & tensorboard logging
     args.wandb = 'wandb' in args.report_to or 'all' in args.report_to
     args.tensorboard = 'tensorboard' in args.report_to or 'all' in args.report_to
+    if args.wandb and wandb is None:
+        raise ImportError("Install wandb or remove it from --report-to")
 
     args.tensorboard_path = os.path.join(args.logs, args.name, "tensorboard") if args.tensorboard else ''
     args.checkpoint_path = os.path.join(args.logs, args.name, "checkpoints")
@@ -192,14 +197,14 @@ def main():
     scheduler = None
     if args.train_data is not None:
         optimizer = get_optimizer(model, args)
-        scaler = GradScaler() if args.precision == "amp" else None
+        scaler = GradScaler(init_scale=args.amp_init_scale) if args.precision == "amp" else None
         total_steps = data["train"].dataloader.num_batches * args.epochs
         scheduler = cosine_lr(optimizer, args.lr, args.warmup, total_steps)
 
     if is_master(args):
         model_without_ddp = model.module if args.distributed else model
         named_parameters = list(model.named_parameters())
-        logging.info(f"↓ Prameters to be optimized ↓")
+        logging.info("Parameters to be optimized")
         n_trainable_params = 0
         for n, p in named_parameters:
             if p.requires_grad:
@@ -207,7 +212,7 @@ def main():
                 n_trainable_params += p.numel()
         logging.info(f"---")
                 
-        logging.info(f"↓ Prameters NOT to be optimized ↓")
+        logging.info("Parameters not to be optimized")
         n_frozen_params = 0
         for n, p in named_parameters:
             if not p.requires_grad:
@@ -331,7 +336,7 @@ def main():
 
         # Saving checkpoints.
         if args.save_logs:
-            if is_master(args):
+            if is_master(args) and not args.no_save_checkpoints:
                 checkpoint_dict = {
                     "epoch": completed_epoch,
                     "name": args.name,
@@ -357,7 +362,7 @@ def main():
 
             if metrics[f"retrieval-mean-recall"] > best:
                 best = metrics[f"retrieval-mean-recall"]
-                if is_master(args):
+                if is_master(args) and not args.no_save_checkpoints:
                     torch.save(
                         checkpoint_dict,
                         os.path.join(args.checkpoint_path, f"best.pt"),

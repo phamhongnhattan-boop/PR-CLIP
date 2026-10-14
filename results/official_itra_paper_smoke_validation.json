@@ -1,0 +1,42 @@
+{
+  "kind": "Released ItraModel architecture with paper token-level objective; resource-limited smoke experiment",
+  "initialization": "OpenAI CLIP ViT-B/32; official RET-2.pt unavailable",
+  "train_csv": "dataset/train/ret2.csv",
+  "train_csv_sha256": "ee7b24a322138fa27bf1870411d5647c326287ea4e2915de6c2b2a68139a0620",
+  "train_pairs_used": 2,
+  "batch_size": 2,
+  "optimizer_steps": 1,
+  "epochs": 1,
+  "loss": "0.01 * bidirectional InfoNCE + token-level PRC",
+  "checkpoint_saved": false,
+  "selection": "No checkpoint selection; each validation is measured after one optimizer step",
+  "metrics_percent": {
+    "rsitmd_val": {
+      "csv": "dataset/test/rsitmd_val.csv",
+      "csv_sha256": "d2f4943c4f187fb37238713b1a53f1ee53f8506e15c9e9345aee747c71b4955f",
+      "images": 856,
+      "captions": 4280,
+      "i2t_R@1": 5.49,
+      "i2t_R@5": 15.65,
+      "i2t_R@10": 23.01,
+      "t2i_R@1": 6.05,
+      "t2i_R@5": 18.81,
+      "t2i_R@10": 29.46,
+      "mR": 16.41
+    },
+    "rsicd_val": {
+      "csv": "dataset/test/rsicd_val.csv",
+      "csv_sha256": "babb50017a24a133eaea5fc670e1977c3bbdfc6e7eb9c878a85d1f37cf48be4e",
+      "images": 1093,
+      "captions": 5465,
+      "i2t_R@1": 5.12,
+      "i2t_R@5": 14.55,
+      "i2t_R@10": 22.96,
+      "t2i_R@1": 5.23,
+      "t2i_R@5": 17.60,
+      "t2i_R@10": 27.59,
+      "mR": 15.51,
+      "note": "Released rsicd_val.csv is identical to rsicd_test.csv"
+    }
+  }
+}

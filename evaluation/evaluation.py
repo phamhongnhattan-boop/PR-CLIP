@@ -2,12 +2,9 @@ import logging
 import os
 import json
 from training.distributed import is_master
-from .linear_eval import linear_eval
-from .zero_shot import zero_shot_eval
 from .retrieval import retrieval_evaluation
 # from .analyze_features import analyze_features
 # from .sts_evaluation import sts_benchmark
-from .nlp_evaluations import nlp_eval
 from .wise_ft import get_wise_ft_model
 
 try:
@@ -91,7 +88,11 @@ def evaluate(model, epoch, preprocess, args, tb_writer=None):
     #     wandb.log({f"eval_NLP_eval/sts_benchmark": score, 'epoch': epoch})
     # NLP evaluation
 
-    nlp_metrics = nlp_eval(model, epoch, args)
+    if args.nlp_eval_frequency:
+        from .nlp_evaluations import nlp_eval
+        nlp_metrics = nlp_eval(model, epoch, args)
+    else:
+        nlp_metrics = {}
     all_metrics.update(nlp_metrics)
     for name, val in nlp_metrics.items():
         if tb_writer is not None:
@@ -101,10 +102,12 @@ def evaluate(model, epoch, preprocess, args, tb_writer=None):
     
     # zeroshot classification
     metrics = {}
-    for zeroshot_dataset in zeroshot_datasets:
-        zeroshot_metrics = zero_shot_eval(model, zeroshot_dataset, epoch, preprocess, args)
-        metrics.update(zeroshot_metrics)
-        all_metrics.update(zeroshot_metrics)
+    if args.zeroshot_frequency:
+        from .zero_shot import zero_shot_eval
+        for zeroshot_dataset in zeroshot_datasets:
+            zeroshot_metrics = zero_shot_eval(model, zeroshot_dataset, epoch, preprocess, args)
+            metrics.update(zeroshot_metrics)
+            all_metrics.update(zeroshot_metrics)
     for name, val in metrics.items():
         if tb_writer is not None:
             tb_writer.add_scalar(f"eval_zero_shot/{name}", val, epoch)
@@ -146,7 +149,8 @@ def evaluate(model, epoch, preprocess, args, tb_writer=None):
 
     # linear evaluation
     metrics = {}
-    if linear_eval_datasets:
+    if linear_eval_datasets and args.linear_frequency:
+        from .linear_eval import linear_eval
         linear_metrics = linear_eval(model, linear_eval_datasets, epoch, preprocess, args)    
         metrics.update(linear_metrics)
         all_metrics.update(linear_metrics)

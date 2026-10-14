@@ -157,11 +157,11 @@ class CsvDataset(Dataset):
             ])
 
         # Faster data loading. see https://github.com/pytorch/pytorch/issues/13246#issuecomment-905703662
-        self.images = np.array(df[img_key].tolist()).astype(np.string_)
+        self.images = np.array(df[img_key].tolist()).astype(np.bytes_)
         self.captions = np.array(df[caption_key].tolist())
         for i in range(len(self.captions)):
             self.captions[i] = self.captions[i].encode('ascii',errors='ignore')
-        self.captions = self.captions.astype(np.string_)
+        self.captions = self.captions.astype(np.bytes_)
 
         # use a subset of given dataset
         if dataset_size is not None:
